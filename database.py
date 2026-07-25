@@ -1,5 +1,5 @@
-import mysql.connector
-from mysql.connector import errorcode
+import pymysql
+
 import random
 from datetime import datetime, timedelta
 from config import MYSQL_CONFIG
@@ -45,7 +45,7 @@ ORDER_TYPES = ["Dine-in", "Takeaway", "Delivery"]
 def get_db_connection():
     """Returns a connection to the MySQL database."""
     create_database_if_not_exists()
-    conn = mysql.connector.connect(**MYSQL_CONFIG)
+    conn = pymysql.connect(**MYSQL_CONFIG)
     return conn
 
 def create_database_if_not_exists():
@@ -54,13 +54,13 @@ def create_database_if_not_exists():
     db_name = config_without_db.pop('database', 'bistro_analytics')
     
     try:
-        conn = mysql.connector.connect(**config_without_db)
+        conn = pymysql.connect(**config_without_db)
         cursor = conn.cursor()
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
         conn.commit()
         cursor.close()
         conn.close()
-    except mysql.connector.Error as err:
+    except pymysql.MySQLError as err:
         print(f"Failed connecting to MySQL Server: {err}")
         raise err
 
@@ -103,7 +103,7 @@ def init_db():
             cursor.execute("UPDATE sales SET status = 'COMPLETED'")
             conn.commit()
             print("'status' column added and initialized successfully.")
-    except mysql.connector.Error as err:
+    except pymysql.MySQLError as err:
         print(f"Migration check ignored or failed: {err}")
         pass
 

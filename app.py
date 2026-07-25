@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, send_from_directory, Response
-import mysql.connector
+import pymysql
 import os
 import threading
 import time
@@ -21,9 +21,9 @@ recent_simulated_orders = []
 def index():
     return app.send_static_file('index.html')
 
-# Initialize DB on start
-with app.app_context():
-    init_db()
+# Initialize DB on start (Disabled for Vercel deployment)
+# with app.app_context():
+#     init_db()
 
 def get_filtered_query_clause(params):
     query_parts = []
@@ -66,7 +66,7 @@ def get_sales():
     where_clause, values = get_filtered_query_clause(request.args)
     
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursorclass=pymysql.cursors.DictCursor)
     
     cursor.execute(f"SELECT COUNT(*) as count FROM sales {where_clause}", values)
     total_records = cursor.fetchone()["count"]
@@ -111,7 +111,7 @@ def get_sales():
 @app.route('/api/sales/order/<order_id>', methods=['GET'])
 def get_order_by_id(order_id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursorclass=pymysql.cursors.DictCursor)
     cursor.execute("""
         SELECT id, order_id, DATE_FORMAT(timestamp, '%Y-%m-%dT%H:%i:%S') as formatted_time, item_name, category, quantity, unit_price, total_price, payment_method, order_type, status
         FROM sales
@@ -210,7 +210,7 @@ def add_sale():
 @app.route('/api/kds', methods=['GET'])
 def get_kds_orders():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursorclass=pymysql.cursors.DictCursor)
     
     # Retrieve all items of active orders (status != COMPLETED)
     cursor.execute("""
@@ -276,7 +276,7 @@ def get_dashboard_stats():
     where_clause, values = get_filtered_query_clause(request.args)
     
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursorclass=pymysql.cursors.DictCursor)
     
     # 1. Total Revenue, Total Orders, AOV
     cursor.execute(f"""

@@ -9,7 +9,7 @@ def get_forecast():
     and day-of-week seasonality, computed in pure Python from MySQL history.
     """
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursorclass=pymysql.cursors.DictCursor)
     
     # Fetch daily sales totals (MySQL format)
     cursor.execute("""
