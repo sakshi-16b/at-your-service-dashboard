@@ -6,6 +6,5 @@ MYSQL_CONFIG = {
     'port': 15742,
     'user': 'avnadmin',
     'password': 'AVNS_EaAjC4H_-saevnKg-2L',  # <-- REPLACE WITH YOUR MYSQL PASSWORD
-    'database': 'bistro_analytics',
-    'use_pure': True
+    'database': 'bistro_analytics'
 }
