@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, send_from_directory, Response
+from werkzeug.security import generate_password_hash, check_password_hash
 import pymysql
 import os
 import threading
@@ -9,8 +10,9 @@ import random
 from datetime import datetime
 from database import get_db_connection, init_db, MENU, PAYMENT_METHODS, ORDER_TYPES
 from forecast_service import get_forecast
+import os
 
-app = Flask(__name__, static_folder='static', static_url_path='')
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static'), static_url_path='')
 
 # Global simulator variables
 simulator_running = False
@@ -20,6 +22,139 @@ recent_simulated_orders = []
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
+
+# ==========================================
+# AUTHENTICATION ROUTES
+# ==========================================
+
+@app.route('/api/auth/signup', methods=['POST'])
+def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    mobile = data.get('mobile_number')
+    
+    if not username or not password or not mobile:
+        return jsonify({"error": "Missing required fields"}), 400
+        
+    hashed_pw = generate_password_hash(password)
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO admins (username, password_hash, mobile_number) VALUES (%s, %s, %s)",
+            (username, hashed_pw, mobile)
+        )
+        conn.commit()
+        return jsonify({"message": "Admin account created successfully!"})
+    except pymysql.MySQLError as e:
+        if 'Duplicate entry' in str(e):
+            return jsonify({"error": "Username already exists"}), 409
+        return jsonify({"error": "Database error"}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM admins WHERE username = %s", (username,))
+        admin = cursor.fetchone()
+        
+        if admin and check_password_hash(admin['password_hash'], password):
+            # In a real app, you would return a JWT here. 
+            # For this demo, returning success is enough for the frontend to store auth state.
+            return jsonify({"message": "Login successful", "username": username})
+        else:
+            return jsonify({"error": "Invalid username or password"}), 401
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.json
+    mobile = data.get('mobile_number')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM admins WHERE mobile_number = %s", (mobile,))
+        admin = cursor.fetchone()
+        
+        if admin:
+            # Generate 6-digit OTP
+            otp = str(random.randint(100000, 999999))
+            
+            # Save OTP to database (simulate expiry logic implicitly for now)
+            cursor.execute("UPDATE admins SET otp_code = %s WHERE id = %s", (otp, admin['id']))
+            conn.commit()
+            
+            # SIMULATE SENDING SMS
+            print(f"\\n{'='*40}\\n[SIMULATED SMS] To: {mobile}\\nYour At Your Service OTP is: {otp}\\n{'='*40}\\n")
+            
+            # We return the OTP in the response purely for easier testing/demo purposes.
+            # IN A REAL STARTUP, DO NOT RETURN THE OTP IN THE HTTP RESPONSE!
+            return jsonify({"message": "OTP sent successfully to registered mobile number.", "simulated_otp": otp})
+        else:
+            return jsonify({"error": "No account found with that mobile number"}), 404
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/auth/verify-otp', methods=['POST'])
+def verify_otp():
+    data = request.json
+    mobile = data.get('mobile_number')
+    otp = data.get('otp')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("SELECT * FROM admins WHERE mobile_number = %s AND otp_code = %s", (mobile, otp))
+        admin = cursor.fetchone()
+        
+        if admin:
+            return jsonify({"message": "OTP verified successfully. You may now reset your password."})
+        else:
+            return jsonify({"error": "Invalid or expired OTP"}), 401
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def reset_password():
+    data = request.json
+    mobile = data.get('mobile_number')
+    otp = data.get('otp')
+    new_password = data.get('new_password')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        # Double check OTP is still valid for this request
+        cursor.execute("SELECT * FROM admins WHERE mobile_number = %s AND otp_code = %s", (mobile, otp))
+        admin = cursor.fetchone()
+        
+        if admin:
+            hashed_pw = generate_password_hash(new_password)
+            # Update password and clear OTP
+            cursor.execute("UPDATE admins SET password_hash = %s, otp_code = NULL WHERE id = %s", (hashed_pw, admin['id']))
+            conn.commit()
+            return jsonify({"message": "Password reset successfully! You can now login."})
+        else:
+            return jsonify({"error": "Invalid request or expired OTP"}), 401
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
 
 # Initialize DB on start (Disabled for Vercel deployment)
 # with app.app_context():
@@ -66,7 +201,7 @@ def get_sales():
     where_clause, values = get_filtered_query_clause(request.args)
     
     conn = get_db_connection()
-    cursor = conn.cursor(cursorclass=pymysql.cursors.DictCursor)
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
     
     cursor.execute(f"SELECT COUNT(*) as count FROM sales {where_clause}", values)
     total_records = cursor.fetchone()["count"]
@@ -111,7 +246,7 @@ def get_sales():
 @app.route('/api/sales/order/<order_id>', methods=['GET'])
 def get_order_by_id(order_id):
     conn = get_db_connection()
-    cursor = conn.cursor(cursorclass=pymysql.cursors.DictCursor)
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
     cursor.execute("""
         SELECT id, order_id, DATE_FORMAT(timestamp, '%Y-%m-%dT%H:%i:%S') as formatted_time, item_name, category, quantity, unit_price, total_price, payment_method, order_type, status
         FROM sales
@@ -210,7 +345,7 @@ def add_sale():
 @app.route('/api/kds', methods=['GET'])
 def get_kds_orders():
     conn = get_db_connection()
-    cursor = conn.cursor(cursorclass=pymysql.cursors.DictCursor)
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
     
     # Retrieve all items of active orders (status != COMPLETED)
     cursor.execute("""
@@ -276,7 +411,7 @@ def get_dashboard_stats():
     where_clause, values = get_filtered_query_clause(request.args)
     
     conn = get_db_connection()
-    cursor = conn.cursor(cursorclass=pymysql.cursors.DictCursor)
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
     
     # 1. Total Revenue, Total Orders, AOV
     cursor.execute(f"""
