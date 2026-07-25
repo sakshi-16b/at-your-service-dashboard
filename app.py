@@ -446,7 +446,7 @@ def get_dashboard_stats():
         
     # 3. Revenue Trend (Daily)
     cursor.execute(f"""
-        SELECT DATE_FORMAT(timestamp, '%Y-%m-%d') as sale_date, SUM(total_price) as daily_revenue
+        SELECT DATE_FORMAT(timestamp, '%%Y-%%m-%%d') as sale_date, SUM(total_price) as daily_revenue
         FROM sales
         {where_clause}
         GROUP BY sale_date
@@ -462,7 +462,7 @@ def get_dashboard_stats():
         
     # 4. Hourly Sales Distribution
     cursor.execute(f"""
-        SELECT DATE_FORMAT(timestamp, '%H') as sale_hour, SUM(total_price) as hourly_revenue, COUNT(DISTINCT order_id) as hourly_orders
+        SELECT DATE_FORMAT(timestamp, '%%H') as sale_hour, SUM(total_price) as hourly_revenue, COUNT(DISTINCT order_id) as hourly_orders
         FROM sales
         {where_clause}
         GROUP BY sale_hour
@@ -480,7 +480,7 @@ def get_dashboard_stats():
             
     # 5. Day-of-Week Sales Distribution
     cursor.execute(f"""
-        SELECT DATE_FORMAT(timestamp, '%w') as weekday, SUM(total_price) as revenue
+        SELECT DATE_FORMAT(timestamp, '%%w') as weekday, SUM(total_price) as revenue
         FROM sales
         {where_clause}
         GROUP BY weekday
