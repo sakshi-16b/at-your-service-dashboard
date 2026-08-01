@@ -1680,54 +1680,7 @@ body.light-theme .login-screen::before {
    MOBILE RESPONSIVENESS
 ========================================= */
 @media (max-width: 768px) {
-    /* App Container & Sidebar */
-    .app-container {
-        flex-direction: column;
-    }
-    
-    .sidebar {
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        align-items: center;
-        padding: 10px 16px;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-        justify-content: space-between;
-    }
-    
-    .sidebar-brand {
-        margin-bottom: 0;
-        padding-bottom: 0;
-        border-bottom: none;
-    }
-    
-    .sidebar-menu {
-        display: flex;
-        flex-direction: row;
-        gap: 10px;
-        flex: 1;
-        justify-content: center;
-    }
-    
-    .menu-item span, .theme-toggle span {
-        display: none; /* Hide text, only show icons on mobile */
-    }
-    
-    .menu-item {
-        padding: 10px;
-    }
-    
-    .sidebar-footer {
-        padding-top: 0;
-        border-top: none;
-    }
-    
-    /* Main Content Area */
-    .main-content {
-        padding: 16px;
-    }
-    
+
     .content-header {
         flex-direction: column;
         align-items: flex-start;
