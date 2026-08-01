@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>At Your Service | Restaurant Sales Analysis Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2pdf.js CDN for Invoice PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card" id="loginCard">
+            <div class="login-header">
+                <i class="fa-solid fa-utensils login-brand-icon"></i>
+                <h2>At Your<span>Service</span></h2>
+                <p>Enter your credentials to access the dashboard</p>
+            </div>
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group" style="text-align: left;">
+                    <label for="loginUsername">Username</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="loginUsername" placeholder="Enter username" required>
+                    </div>
+                </div>
+                <div class="form-group" style="text-align: left; margin-top: 16px;">
+                    <label for="loginPassword">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="Enter password" required>
+                    </div>
+                </div>
+                <div class="login-options" style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+                    <a href="#" id="showForgotBtn" style="color: var(--accent-primary); text-decoration: none;">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary btn-login" style="margin-top: 24px; width: 100%; justify-content: center; height: 44px; font-weight: 700; font-size: 15px;">
+                    Sign In &nbsp;<i class="fa-solid fa-right-to-bracket"></i>
+                </button>
+                <div style="text-align: center; margin-top: 16px; font-size: 13px;">
+                    Don't have an account? <a href="#" id="showSignupBtn" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">Sign up</a>
+                </div>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signupForm" style="display: none;">
+                <div class="form-group" style="text-align: left;">
+                    <label for="signupUsername">New Username</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="signupUsername" placeholder="Choose a username" required>
+                    </div>
+                </div>
+                <div class="form-group" style="text-align: left; margin-top: 16px;">
+                    <label for="signupMobile">Mobile Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="signupMobile" placeholder="Enter mobile number" required>
+                    </div>
+                </div>
+                <div class="form-group" style="text-align: left; margin-top: 16px;">
+                    <label for="signupPassword">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="signupPassword" placeholder="Create a password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-login" style="margin-top: 24px; width: 100%; justify-content: center; height: 44px; font-weight: 700; font-size: 15px;">
+                    Create Account
+                </button>
+                <div style="text-align: center; margin-top: 16px; font-size: 13px;">
+                    Already have an account? <a href="#" id="showLoginBtn" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">Log in</a>
+                </div>
+            </form>
+
+            <!-- Forgot Password Form -->
+            <form id="forgotForm" style="display: none;">
+                <div class="form-group" style="text-align: left;">
+                    <label for="forgotMobile">Registered Mobile Number</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="forgotMobile" placeholder="Enter your mobile number" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-login" style="margin-top: 24px; width: 100%; justify-content: center; height: 44px; font-weight: 700; font-size: 15px;">
+                    Send OTP via SMS
+                </button>
+                <div style="text-align: center; margin-top: 16px; font-size: 13px;">
+                    Remembered it? <a href="#" id="showLoginFromForgotBtn" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">Back to login</a>
+                </div>
+            </form>
+
+            <!-- OTP Verification & Reset Form -->
+            <form id="otpForm" style="display: none;">
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; text-align: left;">We've sent a 6-digit OTP to your mobile number.</p>
+                <div class="form-group" style="text-align: left;">
+                    <label for="resetOtp">Enter OTP</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-key"></i>
+                        <input type="text" id="resetOtp" placeholder="123456" required>
+                    </div>
+                </div>
+                <div class="form-group" style="text-align: left; margin-top: 16px;">
+                    <label for="resetPassword">New Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="resetPassword" placeholder="Enter new password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-login" style="margin-top: 24px; width: 100%; justify-content: center; height: 44px; font-weight: 700; font-size: 15px;">
+                    Reset Password
+                </button>
+                <div style="text-align: center; margin-top: 16px; font-size: 13px;">
+                    <a href="#" id="cancelResetBtn" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-utensils brand-icon"></i>
+                <span class="brand-text">At Your<span>Service</span></span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="#" class="menu-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="analytics">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Detailed Analytics</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="transactions">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span>Transactions</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="kds">
+                    <i class="fa-solid fa-fire-burner"></i>
+                    <span>Kitchen Display (KDS)</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="forecasting">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Sales Forecasting</span>
+                </a>
+                <a href="#" class="menu-item" data-tab="simulation">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Live Simulator</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="theme-toggle" id="themeToggleBtn" style="margin-bottom: 0;">
+                    <i class="fa-solid fa-moon"></i>
+                    <span>Dark Mode</span>
+                </div>
+                <div class="menu-item" id="logoutBtn" style="cursor: pointer; color: var(--danger); margin-top: 0; border-left: none;">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Sign Out</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <div class="header-title" style="display: flex; align-items: center; gap: 16px;">
+                    <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Toggle Menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1 id="tabTitle">Dashboard Overview</h1>
+                        <p id="tabSubtitle">Real-time performance metrics and sales statistics.</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="importBtn">
+                        <i class="fa-solid fa-file-import"></i> Import CSV
+                    </button>
+                    <a href="/api/export" class="btn btn-primary" id="exportBtn">
+                        <i class="fa-solid fa-file-export"></i> Export CSV
+                    </a>
+                </div>
+            </header>
+
+            <!-- Global Filter Bar -->
+            <section class="filter-bar-container">
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label for="filterStartDate">Start Date</label>
+                        <input type="date" id="filterStartDate">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterEndDate">End Date</label>
+                        <input type="date" id="filterEndDate">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterCategory">Category</label>
+                        <select id="filterCategory">
+                            <option value="">All Categories</option>
+                            <option value="Appetizers">Appetizers</option>
+                            <option value="Mains">Mains</option>
+                            <option value="Desserts">Desserts</option>
+                            <option value="Beverages">Beverages</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filterPayment">Payment Method</label>
+                        <select id="filterPayment">
+                            <option value="">All Payments</option>
+                            <option value="Card">Card</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Mobile">Mobile</option>
+                        </select>
+                    </div>
+                    <div class="filter-group search-group">
+                        <label for="filterSearch">Search</label>
+                        <div class="search-input-wrapper">
+                            <input type="text" id="filterSearch" placeholder="Order ID or item...">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </div>
+                    </div>
+                    <button class="btn-icon" id="clearFiltersBtn" title="Clear Filters">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB CONTENT: Dashboard -->
+            <div id="dashboardTab" class="tab-pane active">
+                <!-- KPI cards -->
+                <section class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrapper revenue">
+                            <i class="fa-solid fa-indian-rupee-sign"></i>
+                        </div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Total Revenue</span>
+                            <h3 class="kpi-value" id="kpiRevenue">₹0.00</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrapper orders">
+                            <i class="fa-solid fa-utensils"></i>
+                        </div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Total Orders</span>
+                            <h3 class="kpi-value" id="kpiOrders">0</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrapper aov">
+                            <i class="fa-solid fa-calculator"></i>
+                        </div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Avg Order Value (AOV)</span>
+                            <h3 class="kpi-value" id="kpiAOV">₹0.00</h3>
+                        </div>
+                    </div>
+                    <div class="kpi-card live-status-card" id="kpiLiveStatusCard">
+                        <div class="kpi-icon-wrapper simulator">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="kpi-info">
+                            <span class="kpi-label">Live Simulator</span>
+                            <h3 class="kpi-value" id="kpiSimStatus">INACTIVE</h3>
+                        </div>
+                        <span class="status-indicator"></span>
+                    </div>
+                </section>
+
+                <!-- Dashboard Charts Grid -->
+                <section class="charts-grid">
+                    <!-- Revenue Trend -->
+                    <div class="chart-card large-chart">
+                        <div class="chart-header">
+                            <h3>Revenue Trend</h3>
+                            <span class="chart-subtitle">Daily sales velocity</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="revenueTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Category Breakdown -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Sales by Category</h3>
+                            <span class="chart-subtitle">Revenue share by department</span>
+                        </div>
+                        <div class="chart-body doughnut-body">
+                            <canvas id="categoryShareChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Selling Items -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Top 5 Selling Items</h3>
+                            <span class="chart-subtitle">By total revenue contribution</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="topItemsChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB CONTENT: Analytics -->
+            <div id="analyticsTab" class="tab-pane">
+                <section class="charts-grid analytics-grid">
+                    <!-- Weekly Distribution -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Weekly Sales Distribution</h3>
+                            <span class="chart-subtitle">Revenue grouped by day of week</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="weeklyDistributionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Hourly Distribution -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Hourly Sales Peak</h3>
+                            <span class="chart-subtitle">Sales volume throughout the day</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="hourlyPeakChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB CONTENT: Transactions -->
+            <div id="transactionsTab" class="tab-pane">
+                <section class="table-card">
+                    <div class="table-header">
+                        <div class="table-title-group">
+                            <h3>Transaction Ledger</h3>
+                            <span id="recordCountLabel">Showing 0 records</span>
+                        </div>
+                        <button class="btn btn-primary" id="addOrderBtn">
+                            <i class="fa-solid fa-plus"></i> New Order
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="salesTable">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Date/Time</th>
+                                    <th>Item</th>
+                                    <th>Category</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                    <th>Payment</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th style="text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-pagination">
+                        <button class="btn btn-secondary btn-pagination" id="prevPageBtn" disabled>
+                            <i class="fa-solid fa-chevron-left"></i> Previous
+                        </button>
+                        <span class="pagination-info" id="paginationInfo">Page 1 of 1</span>
+                        <button class="btn btn-secondary btn-pagination" id="nextPageBtn" disabled>
+                            Next <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB CONTENT: Kitchen Display System (KDS) -->
+            <div id="kdsTab" class="tab-pane">
+                <section class="kds-board">
+                    <div class="kds-board-header">
+                        <div class="kds-title-group">
+                            <h3 id="activeTicketCountLabel">Active Kitchen Tickets (0)</h3>
+                            <p>Real-time order statuses and elapsed ticket preparation times.</p>
+                        </div>
+                    </div>
+                    <div class="kds-grid" id="kdsGrid">
+                        <!-- Dynamic active ticket cards -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB CONTENT: Forecasting -->
+            <div id="forecastingTab" class="tab-pane">
+                <section class="forecast-container">
+                    <div class="forecast-meta-card">
+                        <div class="meta-header">
+                            <i class="fa-solid fa-wand-magic-sparkles text-glow"></i>
+                            <h3>Holt-Winters Seasonal Forecast (7-Day Projection)</h3>
+                        </div>
+                        <p class="meta-desc">
+                            Using historical daily data, this predictive service fits a linear regression trend and projects seasonal day-of-week weights. The shaded region denotes a 90% confidence interval based on previous residuals.
+                        </p>
+                        <div class="forecast-stats">
+                            <div class="f-stat">
+                                <span class="f-stat-label">Projected Next Week Revenue</span>
+                                <h4 class="f-stat-value text-accent" id="forecastedRevenue">₹0.00</h4>
+                            </div>
+                            <div class="f-stat">
+                                <span class="f-stat-label">Model Confidence</span>
+                                <h4 class="f-stat-value text-success" id="forecastConfidence">90.4%</h4>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card forecast-chart-card">
+                        <div class="chart-header">
+                            <h3>Next 7 Days Sales Forecast</h3>
+                            <span class="chart-subtitle">Projected revenue trend</span>
+                        </div>
+                        <div class="chart-body forecast-body">
+                            <canvas id="forecastChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB CONTENT: Simulation -->
+            <div id="simulationTab" class="tab-pane">
+                <section class="simulation-container">
+                    <div class="simulation-config-card">
+                        <div class="sim-header">
+                            <div class="sim-brand">
+                                <i class="fa-solid fa-bolt text-warning animated-flash"></i>
+                                <h3>Dinner Rush Live Order Simulator</h3>
+                            </div>
+                            <div class="status-toggle-wrapper">
+                                <span class="status-label">Simulator Status:</span>
+                                <span class="status-badge inactive" id="simBadge">Offline</span>
+                                <button class="btn btn-primary" id="toggleSimBtn">Start Simulator</button>
+                            </div>
+                        </div>
+                        <p class="sim-desc">
+                            Enabling the simulator starts a background daemon thread on the Flask server. It dynamically writes new transactions to the database every 2-5 seconds, simulating dinner-rush sales. Watch the live ticker below update in real time.
+                        </p>
+                    </div>
+
+                    <div class="live-ticker-card">
+                        <div class="ticker-header">
+                            <h3>Live Order Stream</h3>
+                            <span class="ticker-subtitle" id="simTickerSubtitle">Waiting for simulator...</span>
+                        </div>
+                        <div class="ticker-list" id="tickerList">
+                            <div class="empty-ticker-state">
+                                <i class="fa-solid fa-network-wired"></i>
+                                <p>Turn on the simulator to view the real-time order feed.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Transaction Modal -->
+    <div class="modal-backdrop" id="addOrderModal">
+        <div class="modal" style="max-width: 680px;">
+            <div class="modal-header">
+                <h3>Add New Transaction</h3>
+                <button class="modal-close-btn" id="closeAddOrderModal">&times;</button>
+            </div>
+            <form id="addOrderForm">
+                <div class="modal-body">
+                    <!-- Left Column: Form Controls -->
+                    <div class="modal-form-controls" style="display: flex; flex-direction: column; gap: 16px; flex: 1.2;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addCategory">Category *</label>
+                                <select id="addCategory" required>
+                                    <option value="" disabled selected>Select Category</option>
+                                    <option value="Appetizers">Appetizers</option>
+                                    <option value="Mains">Mains</option>
+                                    <option value="Desserts">Desserts</option>
+                                    <option value="Beverages">Beverages</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="addItemName">Item Name *</label>
+                                <select id="addItemName" required disabled>
+                                    <option value="" disabled selected>Select Category First</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addQuantity">Quantity *</label>
+                                <input type="number" id="addQuantity" min="1" max="100" value="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="addUnitPrice">Unit Price (₹)</label>
+                                <input type="number" id="addUnitPrice" step="0.01" min="0.01" readonly required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addPayment">Payment Method *</label>
+                                <select id="addPayment" required>
+                                    <option value="Card">Card</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Mobile">Mobile</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="addType">Order Type *</label>
+                                <select id="addType" required>
+                                    <option value="Dine-in">Dine-in</option>
+                                    <option value="Takeaway">Takeaway</option>
+                                    <option value="Delivery">Delivery</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column: 3D Image Preview -->
+                    <div class="modal-preview-container">
+                        <img src="" id="modalFoodPreviewImg" class="modal-preview-image" alt="Food Preview">
+                        <div class="modal-preview-placeholder" id="modalFoodPreviewPlaceholder">
+                            <i class="fa-solid fa-pizza-slice animated-flash"></i>
+                            <span>Select category to preview 3D render</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelAddOrderModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import CSV Modal -->
+    <div class="modal-backdrop" id="importModal">
+        <div class="modal modal-small">
+            <div class="modal-header">
+                <h3>Import Transaction Log</h3>
+                <button class="modal-close-btn" id="closeImportModal">&times;</button>
+            </div>
+            <form id="importForm">
+                <div class="modal-body">
+                    <div class="import-drag-area" id="importDragArea">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <header>Drag & Drop CSV File</header>
+                        <span>or click to browse</span>
+                        <input type="file" id="importFileInput" accept=".csv" hidden required>
+                    </div>
+                    <div class="selected-file-info" id="selectedFileInfo" style="display: none;">
+                        <span class="file-name" id="selectedFileName">No file selected</span>
+                        <button type="button" class="btn-clear" id="clearSelectedFile">&times;</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelImportModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitImportBtn" disabled>Import Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- App scripts -->
+    <script src="charts.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

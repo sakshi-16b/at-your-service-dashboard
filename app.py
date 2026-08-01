@@ -559,44 +559,47 @@ def import_csv():
         stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
         csv_reader = csv.DictReader(stream)
         
-        required_headers = ['order_id', 'timestamp', 'item_name', 'category', 'quantity', 'unit_price', 'total_price', 'payment_method', 'order_type']
-        headers = csv_reader.fieldnames
-        if not all(h in headers for h in required_headers):
-            return jsonify({"error": f"CSV must contain headers: {', '.join(required_headers)}"}), 400
+        headers = csv_reader.fieldnames or []
+        
+        # Check for minimum required headers to prevent complete junk files
+        if 'item_name' not in headers and 'total_price' not in headers:
+            return jsonify({"error": "CSV must contain at least 'item_name' or 'total_price' columns"}), 400
             
         conn = get_db_connection()
         cursor = conn.cursor()
         
         imported_count = 0
         records = []
-        for row in csv_reader:
+        for row_idx, row in enumerate(csv_reader):
             try:
-                qty = int(row['quantity'])
-                u_price = float(row['unit_price'])
-                t_price = float(row['total_price'])
+                # Use defaults for missing numeric columns
+                qty = int(row.get('quantity') or 1)
+                u_price = float(row.get('unit_price') or 0.0)
+                t_price = float(row.get('total_price') or (qty * u_price) or 0.0)
                 
-                # Check for status or use default 'COMPLETED' for external CSV data
-                status = row.get('status', 'COMPLETED')
+                # Use defaults for string columns
+                status = row.get('status') or 'COMPLETED'
+                order_type = row.get('order_type') or 'Dine-in'
+                payment_method = row.get('payment_method') or 'Cash'
+                category = row.get('category') or 'Uncategorized'
+                item_name = row.get('item_name') or 'Unknown Item'
                 
-                time_str = row['timestamp'].replace('T', ' ')
+                order_id = row.get('order_id') or f"IMP-{int(datetime.now().timestamp())}-{row_idx}"
+                
+                # Handle timestamp safely
+                time_str = row.get('timestamp') or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                time_str = time_str.replace('T', ' ')
                 if '.' in time_str:
                     time_str = time_str.split('.')[0]
                 
                 records.append((
-                    row['order_id'],
-                    time_str,
-                    row['item_name'],
-                    row['category'],
-                    qty,
-                    u_price,
-                    t_price,
-                    row['payment_method'],
-                    row['order_type'],
-                    status
+                    order_id, time_str, item_name, category, 
+                    qty, u_price, t_price, payment_method, 
+                    order_type, status
                 ))
                 imported_count += 1
             except ValueError:
-                continue
+                continue # Skip rows that have completely unparseable numbers
                 
         if records:
             cursor.executemany("""
