@@ -1800,6 +1800,60 @@ body.light-theme .login-screen::before {
 @media (max-width: 768px) {
     .mobile-menu-btn {
         display: block;
+
+
+/* ==========================================================================
+   MOBILE RESPONSIVENESS
+   ========================================================================== */
+
+.mobile-menu-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.mobile-menu-btn:hover {
+    background-color: var(--bg-hover);
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 90;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid, .charts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mobile-menu-btn {
+        display: block;
     }
 
     .app-container {
@@ -1815,6 +1869,7 @@ body.light-theme .login-screen::before {
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         width: 280px;
         box-shadow: var(--shadow-xl);
+        background-color: var(--bg-sidebar); /* Ensure background is solid */
     }
 
     .sidebar.open {
@@ -1823,14 +1878,6 @@ body.light-theme .login-screen::before {
 
     .main-content {
         padding: 16px;
-    }
-
-    .dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .charts-grid {
-        grid-template-columns: 1fr;
     }
 
     .filter-bar {
@@ -1856,5 +1903,15 @@ body.light-theme .login-screen::before {
         flex-direction: column;
         align-items: flex-start;
         gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
     }
 }
